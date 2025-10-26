@@ -1,5 +1,6 @@
 import math
 
+
 class Value:
     def __init__(self, data, children=()):
         self.data = data
@@ -71,7 +72,7 @@ class Value:
 
     def __rtruediv__(self, other):
         return other * (self ** -1)
-    
+
     # e ** x
     def exp(self):
         out = Value(math.exp(self.data), (self, ))
@@ -81,7 +82,7 @@ class Value:
         out._backward = _backward
 
         return out
-    
+
     def tanh(self):
         x = self.data
         v = (math.exp(2*x) - 1) / (math.exp(2*x) + 1)
@@ -93,21 +94,30 @@ class Value:
 
         return out
 
+    def relu(self):
+        x = self.data
+        out = Value((x + abs(x)) / 2, (self, ))
+
+        def _backward():
+            self.grad += (1 if x > 0 else 0) * out.grad
+        out._backward = _backward
+
+        return out
+
     def backward(self):
         sorted_list = []
         visited = set()
 
         def topo(v):
-            if(v in visited):
+            if v in visited:
                 return
-            
+
             visited.add(v)
             for child in v._previous:
                 topo(child)
             sorted_list.append(v)
         topo(self)
 
-        self.grad = 1 # base case (local derivative = 1)
+        self.grad = 1  # base case (local derivative = 1)
         for v in reversed(sorted_list):
             v._backward()
-
